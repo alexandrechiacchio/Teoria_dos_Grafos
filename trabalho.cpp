@@ -2,6 +2,8 @@
 #include <vector>
 #include <list>
 #include <cstring>
+#include <queue>
+#include <stack>
 using namespace std;
 
 typedef enum {
@@ -31,14 +33,18 @@ public:
   virtual int medianDegree();
   virtual vector<int> getAdj(int u);
 
+  int size(){
+    return size;
+  }
+
 };
 
 class MatrixAdj : public AbtractAdj {
   int* matrixAdj;
   int size;
 public:
-  MatrixAdj(int size) {
-    this->size = size;
+  MatrixAdj(int _size) {
+    size = _size+1;
     matrixAdj = new int[size * size];
     memset(matrixAdj , 0 , size * size * sizeof(int));
   }
@@ -131,8 +137,8 @@ class ListAdj : public AbtractAdj {
   list<int>* listAdj;
   int size;
 public:
-  ListAdj(int size) {
-    this->size = size;
+  ListAdj(int _size) {
+    size = _size+1;
     listAdj = new list<int>[size];
   }
 
@@ -202,8 +208,8 @@ class VectorAdj : public AbtractAdj {
   vector<int>* vectorAdj;
   int size;
 public:
-  VectorAdj(int size) {
-    this->size = size;
+  VectorAdj(int _size) {
+    size = _size+1;
     vectorAdj = new vector<int>[size];
   }
 
@@ -376,57 +382,60 @@ public:
     cout << "Median degree: " << medianDegree() << endl;
   }
 
-  // Graph DFS(int node) {
-  //   vector<int> visited;
-  //   vector<int> stack;
-  //   Graph ret = new Graph(vector_t , this->size());
-  //   stack.push_back(node);
-  //   while (!stack.empty()) {
-  //     int cur = stack.back();
-  //     stack.pop_back();
-  //     if (find(visited.begin() , visited.end() , cur) == visited.end()) {
-  //       visited.push_back(cur);
-  //       for (int i : adj->getAdj(cur)) {
-  //         stack.push_back(i);
-  //         ret.addEdge(
-  //       }
-  //     }
-  //   }
-  //   return graph;
-
-    Graph BFS(Node node , Graph graph) {
-      vector<Node*> visited;
-      vector<Node*> queue;
-      queue.push_back(&node);
-      while (!queue.empty()) {
-        Node* current = queue.front();
-        queue.erase(queue.begin());
-        if (find(visited.begin() , visited.end() , current) == visited.end()) {
-          visited.push_back(current);
-          for (Node* adj : current->getAdj()) {
-            queue.push_back(adj);
-            graph.addEdge(current->getData() , adj->getData());
+  Graph* DFS(int u){
+      vector<int> visited(size(),0);
+      vector<int> parent(size(),0);
+      stack<int> stack_graph;
+      Graph* graph = new Graph(vector_t,size());
+      stack_graph.push(u);
+      parent[u] = u;
+      while(!(stack_graph.empty())){
+        int v = stack_graph.top(); stack_graph.pop();
+        if(visited[v] == 0){
+          visited[v] = 1;
+          if(v != u) graph->addEdge(v,parent[v]);
+          for(int viz: adj->getAdj(v)){
+            stack_graph.push(viz);
+            parent[viz] = v;
           }
         }
       }
       return graph;
+  }
+
+  Graph* BFS(int u){
+    vector<int> visited(size(),0);
+    queue<int> queue_graph;
+    queue_graph.push(u);
+    Graph* graph = new Graph(vector_t,size());
+
+    while(!(queue_graph.empty())){
+      int v = queue_graph.front(); queue_graph.pop();
+      visited[v] = 1;
+      for(int viz: adj->getAdj(v)){
+        if(visited[viz] == 0){
+          queue_graph.push(viz);
+          graph->addEdge(v,viz);
+        }
+      }
     }
+    return graph;
   }
 
 };
 
 
 int main() {
-  Graph graph;
-  graph.addNode(1);
-  graph.addNode(2);
-  graph.addNode(3);
-  graph.addNode(4);
-  graph.addNode(5);
-  graph.addEdge(1 , 2);
-  graph.addEdge(1 , 3);
-  graph.addEdge(2 , 4);
-  graph.addEdge(3 , 5);
-  graph.print();
+  Graph* graph = new Graph(vector_t,5);
+  graph->addNode(1);
+  graph->addNode(2);
+  graph->addNode(3);
+  graph->addNode(4);
+  graph->addNode(5);
+  graph->addEdge(1 , 2);
+  graph->addEdge(1 , 3);
+  graph->addEdge(2 , 4);
+  graph->addEdge(3 , 5);
+  //graph.print();
   return 0;
 }
