@@ -15,8 +15,7 @@ typedef enum {
 } Adjecencytype;
 
 
-class AbtractAdj {
-
+class AbstractAdj {
   // vector<int>* vectorAdj;
   // list<int>* listAdj;
   // int* matrixAdj;
@@ -24,32 +23,35 @@ class AbtractAdj {
   Adjecencytype type;
 public:
 
-  virtual ~AbtractAdj() {}
+  virtual ~AbstractAdj() {}
 
-  virtual void AddEdge(int ,int);
-  virtual int degree(int);
-  virtual int EdgeSize();
-  virtual int maxDegree();
-  virtual int minDegree();
-  virtual double avgDegree();
-  virtual int medianDegree();
-  virtual vector<int> getAdj(int u);
+  virtual void addEdge(int ,int) = 0;
+  virtual int degree(int) = 0;
+  virtual int EdgeSize() = 0;
+  virtual int maxDegree() = 0;
+  virtual int minDegree() = 0;
+  virtual double avgDegree() = 0;
+  virtual int medianDegree() = 0;
+  virtual vector<int> getAdj(int u) = 0;
 
 };
 
-class MatrixAdj : public AbtractAdj {
+class MatrixAdj : public AbstractAdj {
   int* matrixAdj;
   int size;
 public:
+
   MatrixAdj(int _size) {
     size = _size+1;
     matrixAdj = new int[size * size];
     memset(matrixAdj , 0 , size * size * sizeof(int));
   }
+
   void addEdge(int u , int v) {
     matrixAdj[u * size + v] = 1;
     matrixAdj[v * size + u] = 1;
   }
+
   int degree(int u) {
     int count = 0;
     for (int i = 0; i < size; i++) {
@@ -59,6 +61,7 @@ public:
     }
     return count;
   }
+
   int EdgeSize() {
     int count = 0;
     for (int i = 0; i < size; i++) {
@@ -70,6 +73,7 @@ public:
     }
     return count / 2;
   }
+
   int maxDegree() {
     int max = 0;
     for (int i = 0; i < size; i++) {
@@ -85,6 +89,7 @@ public:
     }
     return max;
   }
+
   int minDegree() {
     int min = 0;
     for (int i = 0; i < size; i++) {
@@ -104,6 +109,7 @@ public:
   double avgDegree() {
     return 2 * EdgeSize() / size;
   }
+
   int medianDegree() {
     vector<int> degrees;
     for (int i = 0; i < size; i++) {
@@ -116,7 +122,6 @@ public:
       degrees.push_back(degree);
     }
     sort(degrees.begin() , degrees.end());
-
     return degrees[degrees.size() / 2];
   }
 
@@ -129,12 +134,14 @@ public:
     }
     return adj;
   }
+
 };
 
-class ListAdj : public AbtractAdj {
+class ListAdj : public AbstractAdj {
   list<int>* listAdj;
   int size;
 public:
+
   ListAdj(int _size) {
     size = _size+1;
     listAdj = new list<int>[size];
@@ -202,10 +209,11 @@ public:
 
 };
 
-class VectorAdj : public AbtractAdj {
+class VectorAdj : public AbstractAdj {
   vector<int>* vectorAdj;
   int size;
 public:
+
   VectorAdj(int _size) {
     size = _size+1;
     vectorAdj = new vector<int>[size];
@@ -273,6 +281,7 @@ class Node {
   int depth = 0;
   int parent;
 public:
+
   Node() {}
 
   void setParent(int parent) {
@@ -290,16 +299,16 @@ public:
   int getDepth() {
     return depth;
   }
+
 };
 
 
 
 class Graph {
-
   vector<Node*> nodes;
-  AbtractAdj* adj;
-
+  AbstractAdj* adj;
 public:
+
   Graph(Adjecencytype type, int size) {
     if(type == vector_t) {
       adj = new VectorAdj(size);
@@ -326,7 +335,7 @@ public:
     while (!file.eof()) {
       int a , b;
       cin >> a >> b;
-      adj->AddEdge(a , b);
+      adj->addEdge(a , b);
     }
   }
 
@@ -336,8 +345,8 @@ public:
   }
 
   void addEdge(int u , int v) {
-    adj->AddEdge(u , v);
-    adj->AddEdge(v , u);
+    adj->addEdge(u , v);
+    adj->addEdge(v , u);
   }
 
   // void print() {
@@ -424,6 +433,7 @@ public:
       }
     }
   }
+
 };
 
 
