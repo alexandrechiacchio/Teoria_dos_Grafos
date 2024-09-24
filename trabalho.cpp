@@ -1,9 +1,11 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <list>
 #include <cstring>
 #include <queue>
 #include <stack>
+#include <algorithm>
 using namespace std;
 
 typedef enum {
@@ -24,18 +26,14 @@ public:
 
   virtual ~AbtractAdj() {}
 
-  virtual void AddEdge(int u , int v);
-  virtual int degree(int u);
+  virtual void AddEdge(int ,int);
+  virtual int degree(int);
   virtual int EdgeSize();
   virtual int maxDegree();
   virtual int minDegree();
   virtual double avgDegree();
   virtual int medianDegree();
   virtual vector<int> getAdj(int u);
-
-  int size(){
-    return size;
-  }
 
 };
 
@@ -272,16 +270,16 @@ public:
 };
 
 class Node {
-  int depth;
-  Node* parent;
+  int depth = 0;
+  int parent;
 public:
   Node() {}
 
-  void setParent(Node* parent) {
+  void setParent(int parent) {
     this->parent = parent;
   }
 
-  Node* getParent() {
+  int getParent() {
     return this->parent;
   }
 
@@ -313,12 +311,19 @@ public:
     nodes.resize(size , new Node());
   }
 
-  void readInput(const char* filename) {
-    FILE* file = fopen(filename , "r");
+  void readInput(string filename) {
+
+    ifstream file(filename);
+    if (!file.is_open()) {
+      std::cerr << "Error opening file: " << filename << std::endl;
+      return;
+    }
+
     int n;
-    fscanf(file , "%d" , &n);
+    file >> n;
+
     nodes.resize(n , new Node());
-    while (cin.eof()) {
+    while (!file.eof()) {
       int a , b;
       cin >> a >> b;
       adj->AddEdge(a , b);
@@ -358,7 +363,7 @@ public:
   }
 
   int maxDegree() {
-    adj->maxDegree();
+    return adj->maxDegree();
   }
 
   int minDegree() {
@@ -382,60 +387,50 @@ public:
     cout << "Median degree: " << medianDegree() << endl;
   }
 
-  Graph* DFS(int u){
-      vector<int> visited(size(),0);
-      vector<int> parent(size(),0);
-      stack<int> stack_graph;
-      Graph* graph = new Graph(vector_t,size());
-      stack_graph.push(u);
-      parent[u] = u;
-      while(!(stack_graph.empty())){
-        int v = stack_graph.top(); stack_graph.pop();
-        if(visited[v] == 0){
-          visited[v] = 1;
-          if(v != u) graph->addEdge(v,parent[v]);
-          for(int viz: adj->getAdj(v)){
-            stack_graph.push(viz);
-            parent[viz] = v;
-          }
-        }
-      }
-      return graph;
-  }
-
-  Graph* BFS(int u){
-    vector<int> visited(size(),0);
-    queue<int> queue_graph;
-    queue_graph.push(u);
-    Graph* graph = new Graph(vector_t,size());
-
-    while(!(queue_graph.empty())){
-      int v = queue_graph.front(); queue_graph.pop();
-      visited[v] = 1;
-      for(int viz: adj->getAdj(v)){
-        if(visited[viz] == 0){
-          queue_graph.push(viz);
-          graph->addEdge(v,viz);
+  void DFS(int u){
+    vector<int> depth(size(),-1);
+    vector<int> parent(size(),0);
+    stack<int> stack_graph;
+    stack_graph.push(u);
+    parent[u] = u;
+    while(!(stack_graph.empty())){
+      int v = stack_graph.top(); stack_graph.pop();
+      if(depth[v] == -1){
+        depth[v] = parent[v] + 1;
+        this->nodes[v]->setDepth(depth[v]);
+        this->nodes[v]->setParent(parent[v]);
+        for(int viz: adj->getAdj(v)){
+          parent[viz] = v;
+          stack_graph.push(viz);
         }
       }
     }
-    return graph;
   }
 
+  void BFS(int u){
+    vector<int> visited(size(),0);
+    queue<int> queue_graph;
+    queue_graph.push(u);
+    visited[u] = 1;
+    while(!(queue_graph.empty())){
+      int v = queue_graph.front(); queue_graph.pop();
+      for(int viz: adj->getAdj(v)){
+        if(visited[viz] == 0){
+          queue_graph.push(viz);
+          visited[viz] = 1;
+          this->nodes[viz]->setParent(v);
+          this->nodes[viz]->setDepth(this->nodes[v]->getDepth() + 1);
+        }
+      }
+    }
+  }
 };
 
 
 int main() {
   Graph* graph = new Graph(vector_t,5);
-  graph->addNode(1);
-  graph->addNode(2);
-  graph->addNode(3);
-  graph->addNode(4);
-  graph->addNode(5);
-  graph->addEdge(1 , 2);
-  graph->addEdge(1 , 3);
-  graph->addEdge(2 , 4);
-  graph->addEdge(3 , 5);
+
+  graph->readInput("input.txt");
   //graph.print();
   return 0;
 }
