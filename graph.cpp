@@ -195,8 +195,8 @@ public:
     int diameter(int tol = 1e4) {
         cout << "Finding Diameter\r\n";
         int diameter = -1;
-        reset();
         for (int i = 1; i <= size() && i <= tol; i++) {
+            reset();
             BFS(i);
             for (int i = 1; i <= size(); i++) {
                 diameter = max(diameter , depth[i]);
