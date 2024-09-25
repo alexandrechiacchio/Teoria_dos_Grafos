@@ -35,9 +35,14 @@ public:
 
   MatrixAdj(int _size) {
     size = _size + 1;
-    cout << "asdasd\n";
-    matrixAdj = new int[size * size];
-    cout << "asdasd\n";
+    try {
+      matrixAdj = new int[size * size];
+    } catch (const std::bad_alloc& e) {
+      // Handle memory allocation failure
+      cerr << "Memory allocation failed: " << e.what() << std::endl;
+      cerr << "Matrix too big, " << (double)sizeof(int)*size * size/1024/1024/1024 << "GB" << endl;
+      exit(1);
+    }
     memset(matrixAdj , 0 , size * size * sizeof(int));
   }
 
