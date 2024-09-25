@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <sys/resource.h>
 #include <climits>
+#include <set>
 #include <iomanip>
 using namespace std;
 
@@ -66,15 +67,7 @@ public:
   }
 
   int EdgeSize() {
-    int count = 0;
-    for (int i = 0; i < size; i++) {
-      for (int j = 0; j < size; j++) {
-        if (matrixAdj[i * size + j] == 1) {
-          count++;
-        }
-      }
-    }
-    return count / 2;
+    return count(matrixAdj , matrixAdj + size * size , 1)/2;
   }
 
   int maxDegree() {
@@ -135,6 +128,7 @@ public:
         adj.push_back(i);
       }
     }
+    sort(adj.begin() , adj.end());
     return adj;
   }
 
@@ -151,6 +145,7 @@ public:
   }
 
   void addEdge(int u , int v) {
+    if(find(listAdj[u].begin() , listAdj[u].end() , v) != listAdj[u].end()) return;
     listAdj[u].push_back(v);
     listAdj[v].push_back(u);
   }
@@ -207,6 +202,7 @@ public:
     for (int i : listAdj[u]) {
       adj.push_back(i);
     }
+    sort(adj.begin() , adj.end());
     return adj;
   }
 
@@ -223,6 +219,7 @@ public:
   }
 
   void addEdge(int u , int v) {
+    if(find(vectorAdj[u].begin(), vectorAdj[u].end(), v) != vectorAdj[u].end()) return;
     vectorAdj[u].push_back(v);
     vectorAdj[v].push_back(u);
   }
@@ -275,6 +272,7 @@ public:
   }
 
   vector<int> getAdj(int u) {
+    sort(vectorAdj[u].begin() , vectorAdj[u].end());
     return vectorAdj[u];
   }
 
@@ -364,50 +362,7 @@ public:
 
   }
 
-  void readInput(string filename) {
 
-    ifstream file(filename);
-    if (!file.is_open()) {
-      std::cerr << "Error opening file: " << filename << std::endl;
-      return;
-    }
-
-    int n;
-    file >> n;
-
-    nodes.resize(n + 1 , new Node());
-    for (int i = 0; i < n; i++) {
-      nodes[i]->setParent(i);
-    }
-
-    while (!file.eof()) {
-      edgeCnt++;
-      int a , b;
-      file >> a >> b;
-      adj->addEdge(a , b);
-    }
-  }
-
-
-  void addNode(int data) {
-    Node* newNode = new Node();
-    nodes.push_back(newNode);
-  }
-
-  void addEdge(int u , int v) {
-    adj->addEdge(u , v);
-    adj->addEdge(v , u);
-  }
-
-  // void print() {
-  //   for (Node* node : nodes) {
-  //     cout << node->getData() << ": ";
-  //     for (Node* adj : node->getAdj()) {
-  //       cout << adj->getData() << " ";
-  //     }
-  //     cout << endl;
-  //   }
-  // }
 
   int size() {
     return nodes.size() - 1;
@@ -559,12 +514,22 @@ public:
   }
 
   void printInfo2file() {
-    ofstream file("output_" + inputFile);
+    int counter = 0;
+    string outputFileName = "output_" + inputFile;
+    ifstream testFile(outputFileName);
+    while (testFile.good()) {
+      counter++;
+      outputFileName = "output(" + to_string(counter) + ")_" + inputFile;
+      testFile.close();
+      testFile.open(outputFileName);
+    }
+    ofstream file(outputFileName);
     if (!file.is_open()) {
       std::cerr << "Error opening file: " << "output.txt" << std::endl;
       return;
     }
 
+    cout << "printing general info: " << outputFileName << endl;
     file << "Number of nodes: " << size() << endl;
     file << "Number of edges: " << EdgeSize() << endl;
     file << "Max degree: " << maxDegree() << endl;
@@ -577,9 +542,12 @@ public:
       return;
     }
     file << "Memory usage: " << (double(usage.ru_maxrss) / 1024.0) << "MB" << endl;
+
+    cout << "printing time info: " << endl;
     file << "Time DFS: " << timeDFS() << "s" << endl;
     file << "Time BFS: " << timeBFS() << "s" << endl;
 
+    cout << "printing nodes info: " << endl;
     for (int i = 1; i <= 3; i++) {
       file << "DFS(" << i << ")" << endl;
       DFS(i);
@@ -602,6 +570,7 @@ public:
     BFS(20);
     file << "Distance between 20 and 30: " << nodes[30]->getDepth() << endl;
 
+    cout << "printing connected components info: " << endl;
     int connectedComponets = 0;
     int maxComponentSize = -1;
     int minComponentSize = size() + 1;
@@ -617,6 +586,7 @@ public:
     file << "Max component size: " << maxComponentSize << endl;
     file << "Min component size: " << minComponentSize << endl;
 
+    cout << "printing Diameter info: " << endl;
     file << "Diameter: " << diameter() << endl;
 
     // BFS(1);
@@ -629,9 +599,53 @@ public:
 };
 
 
-int main() {
-  Graph* graph = new Graph(vector_t , "grafo_1.txt");
+int main(int argc , char* argv[]) {
+  Adjecencytype type = (Adjecencytype)atoi(argv[1]); // 0 = vector, 1 = list, 2 = matrix
+  Graph* graph = new Graph(type , "grafo_1.txt");
 
   graph->printInfo2file();
+
+
+  // Graph* graph1 = new Graph(matrix_t , "grafo_1.txt");
+  // Graph* graph2 = new Graph(vector_t , "grafo_1.txt");
+
+  // for (int i = 0; i < 10000; i++) {
+  //   vector<int> aux1 = graph1->adj->getAdj(i);
+  //   vector<int> aux2 = graph2->adj->getAdj(i);
+  //   bool flag = true;
+  //   for(int j = 0; j < aux1.size(); j++){
+  //     if(aux1[j] != aux2[j]){
+  //       flag = false;
+  //       for (int k = 0; k < aux1.size(); k++) {
+  //         cout << aux1[k] << " ";
+  //       }
+  //       cout << endl;
+  //       for (int k = 0; k < aux2.size(); k++) {
+  //         cout << aux2[k] << " ";
+  //       }
+  //       break;
+  //     }
+  //   }
+  //   if (flag == false) {
+  //     cout << "Error" << endl;
+  //     break;
+  //   }
+  // }
+
+  // ifstream file("grafo_1.txt");
+  // int aux1, aux2;
+  // file >> aux1;
+  // set<pair<int, int>> v;
+  // int cnt = 0;
+  // while (!file.eof()) {
+  //   file >> aux1 >> aux2;
+  //   if(aux1>aux2) swap(aux1, aux2);
+  //   if(v.count({aux1, aux2})){
+  //     cout << aux1 << " " << aux2 << " already in graph" << endl;
+  //     cnt++;
+  //   }
+  //   v.insert({aux1, aux2});
+  // }
+  // cout << cnt << " repeated edges" << endl;
   return 0;
 }
