@@ -286,6 +286,7 @@ class Node {
   int depth = 0;
   int parent = 0;
   bool visited = false;
+  int component = 0;
 public:
 
   Node() {}
@@ -294,6 +295,7 @@ public:
     depth = 0;
     parent = 0;
     visited = false;
+    int component = 0;
   }
 
   void setParent(int _parent) {
@@ -320,6 +322,14 @@ public:
     visited = true;
   }
 
+  void setComponent(int _component) {
+    component = _component;
+  }
+
+  int getComponent() {
+    return component;
+  }
+
 };
 
 
@@ -329,6 +339,7 @@ class Graph {
   AbstractAdj* adj;
   int edgeCnt = 0;
   string inputFile;
+  int componentCnt = 0;
 public:
 
   Graph(Adjecencytype type , string filename) {
@@ -396,23 +407,28 @@ public:
     return adj->medianDegree();
   }
 
-
-
-  int DFS(int u) {
-    vector<int> depth(size() + 1 , 0);
-    for (int i = 0; i <= size(); i++) {
+  void reset(){
+    for(int i = 0; i <= size(); i++){
       nodes[i]->reset();
       nodes[i]->setParent(i);
     }
+  }
+
+
+  int DFS(int u) {
+    componentCnt++;
+    vector<int> depth(size() + 1 , 0);
     vector<bool> visited(size() + 1 , false);
     vector<int> parent(size() + 1 , 0);
     stack<int> stack_graph;
     stack_graph.push(u);
+    nodes[u]->setComponent(componentCnt);
     parent[u] = u;
     while (!(stack_graph.empty())) {
       int v = stack_graph.top(); stack_graph.pop();
       if (visited[v] == false) {
         visited[v] = true;
+        nodes[v]->setComponent(componentCnt);
         nodes[v]->visit();
         depth[v] = depth[v] + 1;
         this->nodes[v]->setDepth(depth[v]);
@@ -427,16 +443,15 @@ public:
   }
 
   int BFS(int u) {
+    componentCnt++;
     vector<bool> visited(size() + 1 , false);
-    for (int i = 0; i <= size(); i++) {
-      nodes[i]->reset();
-      nodes[i]->setParent(i);
-    }
     queue<int> queue_graph;
     queue_graph.push(u);
+    nodes[u]->setComponent(componentCnt);
     visited[u] = true;
     while (!(queue_graph.empty())) {
       int v = queue_graph.front(); queue_graph.pop();
+      nodes[v]->setComponent(componentCnt);
       for (int viz : adj->getAdj(v)) {
         if (visited[viz] == false) {
           queue_graph.push(viz);
@@ -452,21 +467,25 @@ public:
 
   // average time in seconds to run DFS 100 times
   double timeDFS() {
-    clock_t start = clock();
+    clock_t start, end;
     srand(clock());
     for (int i = 0; i < 100; i++)
+      reset();
+      start = clock();
       DFS(((rand() % size()) + 1) % size());
-    clock_t end = clock();
+      end = clock();
     return (double)(end - start) / CLOCKS_PER_SEC;
   }
 
   // average time in seconds to run BFS 100 times
   double timeBFS() {
-    clock_t start = clock();
     srand(clock());
+    clock_t start, end;
     for (int i = 0; i < 100; i++)
+      reset();
+      start = clock();
       BFS(((rand() % size()) + 1) % size());
-    clock_t end = clock();
+      end = clock();
     return (double)(end - start) / CLOCKS_PER_SEC;
   }
 
@@ -497,6 +516,7 @@ public:
   int diameter(int tol = 1e4){
     cout << "Finding Diameter\r\n";
     int diameter = -1;
+    reset();
     for(int i = 1; i<=size() && i <= tol; i++){
       BFS(i);
       for(int i = 1; i<=size(); i++){
@@ -554,6 +574,7 @@ public:
     cout << "printing nodes info: " << endl;
     for (int i = 1; i <= 3; i++) {
       file << "DFS(" << i << ")" << endl;
+      reset();
       DFS(i);
       file << "parent[10] = " << nodes[10]->getParent() << endl;
       file << "parent[20] = " << nodes[20]->getParent() << endl;
@@ -562,15 +583,18 @@ public:
 
     for (int i = 1; i <= 3; i++) {
       file << "BFS(" << i << ")" << endl;
+      reset();
       BFS(i);
       file << "parent[10] = " << nodes[10]->getParent() << endl;
       file << "parent[20] = " << nodes[20]->getParent() << endl;
       file << "parent[30] = " << nodes[30]->getParent() << endl;
     }
 
+    reset();
     BFS(10);
     file << "Distance between 10 and 20: " << nodes[20]->getDepth() << endl;
     file << "Distance between 10 and 30: " << nodes[30]->getDepth() << endl;
+    reset();
     BFS(20);
     file << "Distance between 20 and 30: " << nodes[30]->getDepth() << endl;
 
@@ -580,15 +604,53 @@ public:
     int minComponentSize = size() + 1;
     for (int i = 1; i <= size(); i++) {
       if (nodes[i]->isVisited() == false) {
-        connectedComponets++;
-        int componentSize = BFS(i);
-        if (componentSize > maxComponentSize) maxComponentSize = componentSize;
-        if (componentSize < minComponentSize) minComponentSize = componentSize;
+        BFS(i);
       }
     }
+
+    for(Node* node : nodes){
+      connectedComponets = max(connectedComponets, node->getComponent());
+    }
+
+    vector<vector<int>> components(connectedComponets);
+
+    for(int i = 1; i<=size(); i++){
+      components[nodes[i]->getComponent()].push_back(i);
+    }
+
+    sort(components.begin(), components.end(), [](vector<int> a, vector<int> b){
+      return a.size() > b.size();
+    });
+
+    for(int i = 0; i<connectedComponets; i++){
+      maxComponentSize = max(maxComponentSize, (int)components[i].size());
+      minComponentSize = min(minComponentSize, (int)components[i].size());
+    }
+
+    for(int i = 0; i<connectedComponets; i++){
+      file << "Component " << i+1 << " size: " << components[i].size() << endl;
+      for(int j = 0; j<components[i].size(); j++){
+        file << components[i][j] << " ";
+        if(j+1 != components[i][j]) cout << "Error" << endl;
+      }
+    }
+
     file << "Number of connected components: " << connectedComponets << endl;
     file << "Max component size: " << maxComponentSize << endl;
     file << "Min component size: " << minComponentSize << endl;
+
+    sort(components.begin(), components.end(), [](vector<int> a, vector<int> b){
+      return a.size() > b.size();
+    });
+
+    for(int i = 0; i<components.size(); i++){
+      file << "Component " << i+1 << " size: " << components[i].size() << endl;
+      for(int j = 0; j<components[i].size(); j++){
+        file << components[i][j] << " ";
+        if(j+1 != components[i][j]) cout << "Error" << endl;
+      }
+    }
+    file << endl;
 
     cout << "printing Diameter info: " << endl;
     file << "Diameter: " << diameter() << endl;
