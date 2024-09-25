@@ -1,0 +1,40 @@
+Number of nodes: 10000
+Number of edges: 109978
+Max degree: 43
+Min degree: 8
+Avg degree: 21.9934
+Median degree: 22
+Memory usage: 3144MB
+Time DFS: 0.534808s
+Time BFS: 0.307675s
+DFS(1)
+parent[10] = 7663
+parent[20] = 2455
+parent[30] = 5317
+DFS(2)
+parent[10] = 7663
+parent[20] = 9543
+parent[30] = 5317
+DFS(3)
+parent[10] = 6425
+parent[20] = 9071
+parent[30] = 6936
+BFS(1)
+parent[10] = 2042
+parent[20] = 8382
+parent[30] = 8979
+BFS(2)
+parent[10] = 8935
+parent[20] = 7541
+parent[30] = 8660
+BFS(3)
+parent[10] = 7685
+parent[20] = 9429
+parent[30] = 5783
+Distance between 10 and 20: 3
+Distance between 10 and 30: 3
+Distance between 20 and 30: 4
+Number of connected components: 1
+Max component size: 10000
+Min component size: 10000
+Diameter: 5
