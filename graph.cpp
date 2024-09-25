@@ -1,5 +1,9 @@
 #include <bits/stdc++.h>
 #include "ABSadj.cpp"
+#include <sys/resource.h>
+#include <ctime>
+#include <cstdlib>
+
 using namespace std;
 
 class Graph {
@@ -10,14 +14,16 @@ class Graph {
     vector<int> parent;
     vector<int> component;
     AbstractAdj* adj;
+    Adjecencytype type;
     string inputFile;
 
     int componentCnt = 0;
 
 public:
 
-    Graph(Adjecencytype type , string filename) {
+    Graph(Adjecencytype _type , string filename) {
         inputFile = filename;
+        type = _type;
 
         ifstream file(filename);
         if (!file.is_open()) {
@@ -49,7 +55,7 @@ public:
     }
 
     int size() {
-        return edgesCnt;
+        return nodesCnt;
     }
 
     int EdgeSize() {
@@ -78,85 +84,92 @@ public:
 
     void reset() {
         componentCnt = 0;
+        visited.clear();
+        depth.clear();
+        parent.clear();
+        component.clear();
         visited.resize(nodesCnt + 1 , false);
-        depth.resize(nodesCnt + 1 , 0);
-        parent.resize(nodesCnt + 1 , 0);
+        depth.resize(nodesCnt + 1 , -1);
+        parent.resize(nodesCnt + 1 , -1);
         component.resize(nodesCnt + 1 , 0);
     }
 
 
-    int DFS(int u) {
+    void DFS(int u) {
         componentCnt++;
-        stack<int> stack_graph;
-        stack_graph.push(u);
+        stack<int> stck;
+
+        stck.push(u);
         component[u] = componentCnt;
         parent[u] = u;
-        while (!(stack_graph.empty())) {
-            int v = stack_graph.top(); stack_graph.pop();
+        depth[u] = 0;
+        while (!(stck.empty())) {
+            int v = stck.top();
+            stck.pop();
             if (visited[v] == false) {
                 visited[v] = true;
                 component[v] = componentCnt;
-                depth[v] = depth[v] + 1;
-                this->nodes[v]->setDepth(depth[v]);
-                this->nodes[v]->setParent(parent[v]);
                 for (int viz : adj->getAdj(v)) {
-                    parent[viz] = v;
-                    stack_graph.push(viz);
+                    if (visited[viz] == false) {
+                        parent[viz] = v;
+                        depth[viz] = depth[v] + 1;
+                        stck.push(viz);
+                    }
                 }
             }
         }
-        return count(visited.begin() , visited.end() , true);
     }
 
-    int BFS(int u) {
+    void BFS(int u) {
         componentCnt++;
-        vector<bool> visited(size() + 1 , false);
-        queue<int> queue_graph;
-        queue_graph.push(u);
-        nodes[u]->setComponent(componentCnt);
+        queue<int> queue;
+        queue.push(u);
+        component[u] = componentCnt;
         visited[u] = true;
-        while (!(queue_graph.empty())) {
-            int v = queue_graph.front(); queue_graph.pop();
-            nodes[v]->setComponent(componentCnt);
-            for (int viz : adj->getAdj(v)) {
-                if (visited[viz] == false) {
-                    queue_graph.push(viz);
-                    visited[viz] = true;
-                    nodes[viz]->visit();
-                    nodes[viz]->setParent(v);
-                    nodes[viz]->setDepth(nodes[v]->getDepth() + 1);
+        depth[u] = 0;
+        parent[u] = u;
+        while (!(queue.empty())) {
+            u = queue.front(); queue.pop();
+            for (int v : adj->getAdj(u)) {
+                if (!visited[v]) {
+                    queue.push(v);
+                    visited[v] = true;
+                    parent[v] = u;
+                    depth[v] = depth[u] + 1;
+                    component[v] = componentCnt;
                 }
             }
         }
-        return count(visited.begin() , visited.end() , true);
     }
 
     // average time in seconds to run DFS 100 times
     double timeDFS() {
         clock_t start , end;
         srand(clock());
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < 100; i++) {
             reset();
-        start = clock();
-        DFS(((rand() % size()) + 1) % size());
-        end = clock();
+            start = clock();
+            DFS(((rand() % size()) + 1));
+            end = clock();
+        }
         return (double)(end - start) / CLOCKS_PER_SEC;
     }
 
     // average time in seconds to run BFS 100 times
     double timeBFS() {
-        srand(clock());
         clock_t start , end;
-        for (int i = 0; i < 100; i++)
+        srand(clock());
+        for (int i = 0; i < 100; i++) {
             reset();
-        start = clock();
-        BFS(((rand() % size()) + 1) % size());
-        end = clock();
+            start = clock();
+            BFS(((rand() % size()) + 1));
+            end = clock();
+        }
         return (double)(end - start) / CLOCKS_PER_SEC;
     }
 
     vector<vector<int>> FloydWarshall() {
-        cout << "Running Floyd Warshall\r";
+        cout << "Running Floyd Warshall" << endl;
         vector<vector<int>> dist(size() + 1 , vector<int>(size() + 1 , size() + 10));
         for (int i = 1; i <= size(); i++) {
             vector<int> aux = adj->getAdj(i);
@@ -186,11 +199,113 @@ public:
         for (int i = 1; i <= size() && i <= tol; i++) {
             BFS(i);
             for (int i = 1; i <= size(); i++) {
-                if (nodes[i]->getDepth() > diameter) {
-                    diameter = nodes[i]->getDepth();
-                }
+                diameter = max(diameter , depth[i]);
             }
         }
         return diameter;
     }
-}
+
+    vector<vector<int>> getComponents(){
+        reset();
+        for(int i = 1; i<=size(); i++){
+            if(visited[i] == false){
+                BFS(i);
+            }
+        }
+
+        vector<vector<int>> ret(*max_element(component.begin(), component.end()) + 1);
+
+        for(int i = 1; i<=size(); i++){
+            ret[component[i]].push_back(i);
+        }
+
+        sort(ret.begin(), ret.end(), [](vector<int> a, vector<int> b){
+            return a.size() > b.size();
+        });
+
+        return ret;
+    }
+
+
+    void printInfo2file() {
+        string outputFileName = "output_" + to_string((int)type) + "_" + inputFile;
+        ofstream file(outputFileName);
+        if (!file.is_open()) {
+            std::cerr << "Error opening file: " << "output.txt" << std::endl;
+            return;
+        }
+        cout << "printing general info: " << outputFileName << endl;
+        file << "Number of nodes: " << size() << endl;
+        file << "Number of edges: " << EdgeSize() << endl;
+        file << "Max degree: " << maxDegree() << endl;
+        file << "Min degree: " << minDegree() << endl;
+        file << "Avg degree: " << avgDegree() << endl;
+        file << "Median degree: " << medianDegree() << endl;
+        struct rusage usage;
+        if (getrusage(RUSAGE_SELF , &usage) < 0) {
+            cerr << "Error getting resource usage" << endl;
+            return;
+        }
+        file << "Memory usage: " << (double(usage.ru_maxrss) / 1024.0) << "MB" << endl;
+
+        cout << "printing time info: " << endl;
+        file << "Time DFS: " << timeDFS() << "s" << endl;
+        file << "Time BFS: " << timeBFS() << "s" << endl;
+
+        cout << "printing nodes info: " << endl;
+        for (int i = 1; i <= 3; i++) {
+            file << "DFS(" << i << ")" << endl;
+            reset();
+            DFS(i);
+            file << "parent[10] = " << parent[10] << endl;
+            file << "parent[20] = " << parent[20] << endl;
+            file << "parent[30] = " << parent[30] << endl;
+        }
+
+        for (int i = 1; i <= 3; i++) {
+            file << "BFS(" << i << ")" << endl;
+            reset();
+            BFS(i);
+            file << "parent[10] = " << parent[10] << endl;
+            file << "parent[20] = " << parent[20] << endl;
+            file << "parent[30] = " << parent[30] << endl;
+        }
+
+        reset();
+        BFS(10);
+        file << "Distance between 10 and 20: " << depth[20] << endl;
+        file << "Distance between 10 and 30: " << depth[30] << endl;
+        reset();
+        BFS(20);
+        file << "Distance between 20 and 30: " << depth[30] << endl;
+
+        cout << "printing connected components info: " << endl;
+
+        vector<vector<int>> components = getComponents();
+        int minComponentSize = (min_element(components.begin(), components.end()-1, [](vector<int> a, vector<int> b){
+            return a.size() < b.size();
+        }))->size();
+        int maxComponentSize = (max_element(components.begin(), components.end()-1, [](vector<int> a, vector<int> b){
+            return a.size() < b.size();
+        }))->size();
+
+        file << "Número de componentes conexas: " << components.size()-1 << endl;
+        file << "Tamanho da menor componente: " << minComponentSize << endl;
+        file << "Tamanho da maior componente: " << maxComponentSize << endl;
+
+        cout << "printing Diameter info: " << endl;
+        file << "Diameter: " << diameter() << endl;
+
+        cout << "printing components: " << endl;
+
+        for(int i = 0; i<components.size()-1; i++){
+            file << "Component " << i+1 << " size: " << components[i].size() << endl;
+            for(int j = 0; j<components[i].size(); j++){
+                file << components[i][j] << " ";
+            }
+            file << '\n' << endl;
+        }
+
+
+    }
+};

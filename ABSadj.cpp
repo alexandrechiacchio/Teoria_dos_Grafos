@@ -35,7 +35,9 @@ public:
 
   MatrixAdj(int _size) {
     size = _size + 1;
+    cout << "asdasd\n";
     matrixAdj = new int[size * size];
+    cout << "asdasd\n";
     memset(matrixAdj , 0 , size * size * sizeof(int));
   }
 
