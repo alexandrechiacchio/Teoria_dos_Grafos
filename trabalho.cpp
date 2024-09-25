@@ -43,6 +43,7 @@ public:
 class MatrixAdj : public AbstractAdj {
   int* matrixAdj;
   int size;
+  int edgesizei = 0;
 public:
 
   MatrixAdj(int _size) {
@@ -52,9 +53,12 @@ public:
   }
 
   void addEdge(int u , int v) {
-    matrixAdj[u * size + v] = 1;
-    matrixAdj[v * size + u] = 1;
+    if(matrixAdj[u * size + v] == true) return;
+    matrixAdj[u * size + v] = true;
+    matrixAdj[v * size + u] = true;
+    edgesizei++;
   }
+
 
   int degree(int u) {
     int count = 0;
@@ -67,7 +71,7 @@ public:
   }
 
   int EdgeSize() {
-    return count(matrixAdj , matrixAdj + size * size , 1)/2;
+    return edgesizei;
   }
 
   int maxDegree() {
@@ -515,7 +519,7 @@ public:
 
   void printInfo2file() {
     int counter = 0;
-    string outputFileName = "output_" + inputFile;
+    string outputFileName = "output_(0)" + inputFile;
     ifstream testFile(outputFileName);
     while (testFile.good()) {
       counter++;
