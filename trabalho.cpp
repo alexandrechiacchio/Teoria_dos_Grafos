@@ -280,21 +280,21 @@ public:
 
 class Node {
   int depth = 0;
-  int parent;
+  int parent = 0;
 public:
 
   Node() {}
 
-  void setParent(int parent) {
-    this->parent = parent;
+  void setParent(int _parent) {
+    parent = _parent;
   }
 
   int getParent() {
-    return this->parent;
+    return parent;
   }
 
-  void setDepth(int depth) {
-    this->depth = depth;
+  void setDepth(int _depth) {
+    depth = _depth;
   }
 
   int getDepth() {
@@ -324,7 +324,6 @@ public:
     int size;
     file >> size;
 
-    nodes.resize(size , new Node());
     if(type == vector_t) {
       adj = new VectorAdj(size);
     } else if(type == list_t) {
@@ -332,7 +331,13 @@ public:
     } else {
       adj = new MatrixAdj(size);
     }
+
     nodes.resize(size + 1 , new Node());
+    for(int i = 0; i<=size; i++){
+      nodes[i] = new Node();
+    }
+    // cout << nodes[0] == nodes[1] << endl;
+
     while (!file.eof()) {
       edgeCnt++;
       int a , b;
@@ -444,12 +449,16 @@ public:
     visited[u] = 1;
     while(!(queue_graph.empty())){
       int v = queue_graph.front(); queue_graph.pop();
+      cout << "Visitando " << v << endl;
       for(int viz: adj->getAdj(v)){
+        cout << "Vizinho de " << v << ": " << viz << endl;
         if(visited[viz] == 0){
           queue_graph.push(viz);
           visited[viz] = 1;
-          this->nodes[viz]->setParent(v);
-          this->nodes[viz]->setDepth(this->nodes[v]->getDepth() + 1);
+          nodes[viz]->setParent(v);
+          nodes[viz]->setDepth(nodes[v]->getDepth() + 1);
+          cout << "Parent de " << viz << ": " << nodes[viz]->getParent() << endl;
+          cout << "Depth de " << viz << ": " << nodes[viz]->getDepth() << endl;
         }
       }
     }
@@ -503,15 +512,31 @@ public:
       return;
     }
     file << "Memory usage: " << (double(usage.ru_maxrss) / 1024.0) << "MB" << endl;
-    file << "Time DFS: " << timeDFS() << "s" << endl;
-    file << "Time BFS: " << timeBFS() << "s" << endl;
+    // file << "Time DFS: " << timeDFS() << "s" << endl;
+    // file << "Time BFS: " << timeBFS() << "s" << endl;
+
+    // for (int i = 1; i<=3; i++){
+    //   file << "DFS(" << i << ")" << endl;
+    //   DFS(i);
+    //   file << "parent[1] = " << nodes[1]->getParent() << endl;
+    //   file << "parent[2] = " << nodes[2]->getParent() << endl;
+    //   file << "parent[3] = " << nodes[3]->getParent() << endl;
+    // }
 
     for (int i = 1; i<=3; i++){
-      file << "DFS(" << i << ")" << endl;
-      DFS(i);
+      file << "BFS(" << i << ")" << endl;
+      BFS(i);
       file << "parent[1] = " << nodes[1]->getParent() << endl;
       file << "parent[2] = " << nodes[2]->getParent() << endl;
       file << "parent[3] = " << nodes[3]->getParent() << endl;
+    }
+
+    cout << "BFS(1)" << endl;
+
+    BFS(1);
+
+    for(int i = 0; i <= size(); i++){
+      cout << "Node " << i << " depth: " << nodes[i]->getDepth() << " parent: " << nodes[i]->getParent() << endl;
     }
   }
 };
