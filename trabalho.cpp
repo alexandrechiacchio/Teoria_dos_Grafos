@@ -94,7 +94,7 @@ public:
   }
 
   int minDegree() {
-    int min = 0;
+    int min = size+1;
     for (int i = 0; i < size; i++) {
       int degree = 0;
       for (int j = 0; j < size; j++) {
@@ -179,7 +179,7 @@ public:
   }
 
   int minDegree() {
-    int min = 0;
+    int min = size+1;
     for (int i = 0; i < size; i++) {
       int degree = listAdj[i].size();
       if (degree < min) {
@@ -251,7 +251,7 @@ public:
   }
 
   int minDegree() {
-    int min = 0;
+    int min = size+1;
     for (int i = 0; i < size; i++) {
       int degree = vectorAdj[i].size();
       if (degree < min) {
@@ -583,17 +583,17 @@ public:
     for (int i = 1; i <= 3; i++) {
       file << "DFS(" << i << ")" << endl;
       DFS(i);
-      file << "parent[1] = " << nodes[1]->getParent() << endl;
-      file << "parent[2] = " << nodes[2]->getParent() << endl;
-      file << "parent[3] = " << nodes[3]->getParent() << endl;
+      file << "parent[10] = " << nodes[10]->getParent() << endl;
+      file << "parent[20] = " << nodes[20]->getParent() << endl;
+      file << "parent[30] = " << nodes[30]->getParent() << endl;
     }
 
     for (int i = 1; i <= 3; i++) {
       file << "BFS(" << i << ")" << endl;
       BFS(i);
-      file << "parent[1] = " << nodes[1]->getParent() << endl;
-      file << "parent[2] = " << nodes[2]->getParent() << endl;
-      file << "parent[3] = " << nodes[3]->getParent() << endl;
+      file << "parent[10] = " << nodes[10]->getParent() << endl;
+      file << "parent[20] = " << nodes[20]->getParent() << endl;
+      file << "parent[30] = " << nodes[30]->getParent() << endl;
     }
 
     BFS(10);
