@@ -95,7 +95,7 @@ public:
 
   int minDegree() {
     int min = size+1;
-    for (int i = 0; i < size; i++) {
+    for (int i = 1; i < size; i++) {
       int degree = 0;
       for (int j = 0; j < size; j++) {
         if (matrixAdj[i * size + j] == 1) {
@@ -180,7 +180,7 @@ public:
 
   int minDegree() {
     int min = size+1;
-    for (int i = 0; i < size; i++) {
+    for (int i = 1; i < size; i++) {
       int degree = listAdj[i].size();
       if (degree < min) {
         min = degree;
@@ -252,7 +252,7 @@ public:
 
   int minDegree() {
     int min = size+1;
-    for (int i = 0; i < size; i++) {
+    for (int i = 1; i < size; i++) {
       int degree = vectorAdj[i].size();
       if (degree < min) {
         min = degree;
