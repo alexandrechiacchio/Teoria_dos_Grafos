@@ -6,6 +6,7 @@
 #include <queue>
 #include <stack>
 #include <algorithm>
+#include <sys/resource.h>
 using namespace std;
 
 typedef enum {
@@ -307,9 +308,23 @@ public:
 class Graph {
   vector<Node*> nodes;
   AbstractAdj* adj;
+  int edgeCnt = 0;
+  string inputFile;
 public:
 
-  Graph(Adjecencytype type, int size) {
+  Graph(Adjecencytype type, string filename) {
+    inputFile = filename;
+
+    ifstream file(filename);
+    if (!file.is_open()) {
+      std::cerr << "Error opening file: " << filename << std::endl;
+      return;
+    }
+
+    int size;
+    file >> size;
+
+    nodes.resize(size , new Node());
     if(type == vector_t) {
       adj = new VectorAdj(size);
     } else if(type == list_t) {
@@ -317,7 +332,14 @@ public:
     } else {
       adj = new MatrixAdj(size);
     }
-    nodes.resize(size , new Node());
+    nodes.resize(size + 1 , new Node());
+    while (!file.eof()) {
+      edgeCnt++;
+      int a , b;
+      file >> a >> b;
+      adj->addEdge(a , b);
+    }
+
   }
 
   void readInput(string filename) {
@@ -331,13 +353,19 @@ public:
     int n;
     file >> n;
 
-    nodes.resize(n , new Node());
+    nodes.resize(n + 1 , new Node());
+    for(int i = 0; i<n; i++){
+      nodes[i]->setParent(i);
+    }
+
     while (!file.eof()) {
+      edgeCnt++;
       int a , b;
-      cin >> a >> b;
+      file >> a >> b;
       adj->addEdge(a , b);
     }
   }
+
 
   void addNode(int data) {
     Node* newNode = new Node();
@@ -360,7 +388,7 @@ public:
   // }
 
   int size() {
-    return nodes.size();
+    return nodes.size()-1;
   }
 
   int EdgeSize() {
@@ -387,14 +415,7 @@ public:
     return adj->medianDegree();
   }
 
-  void printInfo() {
-    cout << "Number of nodes: " << size() << endl;
-    cout << "Number of edges: " << EdgeSize() << endl;
-    cout << "Max degree: " << maxDegree() << endl;
-    cout << "Min degree: " << minDegree() << endl;
-    cout << "Avg degree: " << avgDegree() << endl;
-    cout << "Median degree: " << medianDegree() << endl;
-  }
+
 
   void DFS(int u){
     vector<int> depth(size(),-1);
@@ -434,13 +455,71 @@ public:
     }
   }
 
+  // average time in seconds to run DFS 100 times
+  double timeDFS(){
+    clock_t start = clock();
+    srand(clock());
+    for (int i = 0; i < 100; i++)
+      DFS(((rand() % size())+1)%size());
+    clock_t end = clock();
+    return (double)(end - start)/CLOCKS_PER_SEC;
+  }
+
+  // average time in seconds to run BFS 100 times
+  double timeBFS(){
+    clock_t start = clock();
+    srand(clock());
+    for (int i = 0; i < 100; i++)
+      BFS(((rand() % size())+1)%size());
+    clock_t end = clock();
+    return (double)(end - start)/CLOCKS_PER_SEC;
+  }
+
+    void printInfo() {
+    cout << "Number of nodes: " << size() << endl;
+    cout << "Number of edges: " << EdgeSize() << endl;
+    cout << "Max degree: " << maxDegree() << endl;
+    cout << "Min degree: " << minDegree() << endl;
+    cout << "Avg degree: " << avgDegree() << endl;
+    cout << "Median degree: " << medianDegree() << endl;
+  }
+
+   void printInfo2file(){
+    ofstream file("output_" + inputFile);
+    if (!file.is_open()) {
+      std::cerr << "Error opening file: " << "output.txt" << std::endl;
+      return;
+    }
+
+    file << "Number of nodes: " << size() << endl;
+    file << "Number of edges: " << EdgeSize() << endl;
+    file << "Max degree: " << maxDegree() << endl;
+    file << "Min degree: " << minDegree() << endl;
+    file << "Avg degree: " << avgDegree() << endl;
+    file << "Median degree: " << medianDegree() << endl;
+    struct rusage usage;
+    if(getrusage(RUSAGE_SELF, &usage) < 0){
+      cerr << "Error getting resource usage" << endl;
+      return;
+    }
+    file << "Memory usage: " << (double(usage.ru_maxrss) / 1024.0) << "MB" << endl;
+    file << "Time DFS: " << timeDFS() << "s" << endl;
+    file << "Time BFS: " << timeBFS() << "s" << endl;
+
+    for (int i = 1; i<=3; i++){
+      file << "DFS(" << i << ")" << endl;
+      DFS(i);
+      file << "parent[1] = " << nodes[1]->getParent() << endl;
+      file << "parent[2] = " << nodes[2]->getParent() << endl;
+      file << "parent[3] = " << nodes[3]->getParent() << endl;
+    }
+  }
 };
 
 
 int main() {
-  Graph* graph = new Graph(vector_t,5);
+  Graph* graph = new Graph(vector_t, "input.txt");
 
-  graph->readInput("input.txt");
-  //graph.print();
+  graph->printInfo2file();
   return 0;
 }
