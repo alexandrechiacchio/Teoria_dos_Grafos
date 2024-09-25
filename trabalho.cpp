@@ -408,6 +408,7 @@ public:
   }
 
   void reset(){
+    componentCnt = 0;
     for(int i = 0; i <= size(); i++){
       nodes[i]->reset();
       nodes[i]->setParent(i);
@@ -602,6 +603,7 @@ public:
     int connectedComponets = 0;
     int maxComponentSize = -1;
     int minComponentSize = size() + 1;
+    reset();
     for (int i = 1; i <= size(); i++) {
       if (nodes[i]->isVisited() == false) {
         BFS(i);
@@ -612,7 +614,9 @@ public:
       connectedComponets = max(connectedComponets, node->getComponent());
     }
 
-    vector<vector<int>> components(connectedComponets);
+    // cout << connectedComponets << endl;
+
+    vector<vector<int>> components(connectedComponets+1);
 
     for(int i = 1; i<=size(); i++){
       components[nodes[i]->getComponent()].push_back(i);
@@ -627,6 +631,10 @@ public:
       minComponentSize = min(minComponentSize, (int)components[i].size());
     }
 
+    file << "Number of connected components: " << connectedComponets << endl;
+    file << "Max component size: " << maxComponentSize << endl;
+    file << "Min component size: " << minComponentSize << endl;
+
     for(int i = 0; i<connectedComponets; i++){
       file << "Component " << i+1 << " size: " << components[i].size() << endl;
       for(int j = 0; j<components[i].size(); j++){
@@ -634,10 +642,6 @@ public:
         if(j+1 != components[i][j]) cout << "Error" << endl;
       }
     }
-
-    file << "Number of connected components: " << connectedComponets << endl;
-    file << "Max component size: " << maxComponentSize << endl;
-    file << "Min component size: " << minComponentSize << endl;
 
     sort(components.begin(), components.end(), [](vector<int> a, vector<int> b){
       return a.size() > b.size();
