@@ -227,6 +227,25 @@ public:
     }
 
 
+    int minComponentSize(){
+        vector<vector<int>> components = getComponents();
+        return min_element(components.begin(), components.end()-1, [](vector<int> a, vector<int> b){
+            return a.size() < b.size();
+        })->size();
+    }
+
+    int maxComponentSize(){
+        vector<vector<int>> components = getComponents();
+        return max_element(components.begin(), components.end()-1, [](vector<int> a, vector<int> b){
+            return a.size() < b.size();
+        })->size();
+    }
+
+    int componentsCnt(){
+        vector<vector<int>> components = getComponents();
+        return components.size()-1; // components.back() does not count as its empty
+    }
+
     void printInfo2file() {
         string outputFileName = "output_" + to_string((int)type) + "_" + inputFile;
         ofstream file(outputFileName);
@@ -251,6 +270,8 @@ public:
         cout << "printing time info: " << endl;
         file << "Time DFS: " << timeDFS() << "s" << endl;
         file << "Time BFS: " << timeBFS() << "s" << endl;
+
+        if(type != vector_t) return; // tudo igual daqui pra baixo, mas muito demorado se n for por vetor
 
         cout << "printing nodes info: " << endl;
         for (int i = 1; i <= 3; i++) {

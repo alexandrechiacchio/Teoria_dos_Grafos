@@ -29,13 +29,17 @@ public:
 
 class MatrixAdj : public AbstractAdj {
   int* matrixAdj;
-  int size;
+  long long size;
   int edgeCnt = 0;
 public:
 
   MatrixAdj(int _size) {
     size = _size + 1;
     try {
+      if (size > sqrt(LONG_LONG_MAX)) {
+            cerr << "Size too large, potential overflow." << endl;
+            exit(1);
+        }
       matrixAdj = new int[size * size];
     } catch (const std::bad_alloc& e) {
       // Handle memory allocation failure
