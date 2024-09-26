@@ -146,26 +146,30 @@ public:
     double timeDFS() {
         clock_t start , end;
         srand(clock());
+        clock_t total = 0;
         for (int i = 0; i < 100; i++) {
             reset();
             start = clock();
             DFS(((rand() % size()) + 1));
             end = clock();
+            total += (end - start);
         }
-        return (double)(end - start) / CLOCKS_PER_SEC;
+        return (double)(total) / CLOCKS_PER_SEC;
     }
 
     // average time in seconds to run BFS 100 times
     double timeBFS() {
         clock_t start , end;
         srand(clock());
+        clock_t total = 0;
         for (int i = 0; i < 100; i++) {
             reset();
             start = clock();
             BFS(((rand() % size()) + 1));
             end = clock();
+            total += (end - start);
         }
-        return (double)(end - start) / CLOCKS_PER_SEC;
+        return (double)(total) / CLOCKS_PER_SEC;
     }
 
     vector<vector<int>> FloydWarshall() {
@@ -192,7 +196,7 @@ public:
         return dist;
     }
 
-    int diameter(int tol = 1e4) {
+    int diameter(int tol = 1e2) {
         cout << "Finding Diameter\r\n";
         int diameter = -1;
         for (int i = 1; i <= size() && i <= tol; i++) {
