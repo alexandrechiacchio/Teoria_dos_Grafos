@@ -4,9 +4,9 @@ Max degree: 43
 Min degree: 8
 Avg degree: 21.9828
 Median degree: 22
-Memory usage: 5.49219MB
-Time DFS: 0.002935s
-Time BFS: 0.002344s
+Memory usage: 5.34375MB
+Time DFS: 0.302088s
+Time BFS: 0.235527s
 DFS(1)
 parent[10] = 1215
 parent[20] = 666

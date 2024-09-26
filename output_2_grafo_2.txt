@@ -4,6 +4,6 @@ Max degree: 112
 Min degree: 1
 Avg degree: 52.004
 Median degree: 55
-Memory usage: 9620.05MB
-Time DFS: 0.851815s
-Time BFS: 0.400061s
+Memory usage: 9521.57MB
+Time DFS: 114.078s
+Time BFS: 107.744s
