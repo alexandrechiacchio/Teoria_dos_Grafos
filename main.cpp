@@ -4,15 +4,13 @@ using namespace std;
 
 int main(int argc, char const *argv[]){
     string inputFile = argv[1];
-    Graph* graph1 = new Graph(vector_t , inputFile);
-    graph1->printInfo2file();
+
+    Graph* graph1 = new Graph(inputFile);
+    graph1->printInfo2file_2();
+
+    // Graph* graph1 = new Graph("input.txt");
+    // graph1->debugInput();
+
     delete graph1;
-
-    Graph* graph2 = new Graph(list_t , inputFile);
-    graph2->printInfo2file();
-    delete graph2;
-
-    // Graph* graph3 = new Graph(matrix_t , inputFile);
-    // graph3->printInfo2file();
-    // delete graph3;
+    return 0;
 }

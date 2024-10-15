@@ -1,9 +1,0 @@
-Number of nodes: 4843750
-Number of edges: 13168918
-Max degree: 22
-Min degree: 1
-Avg degree: 5.43749
-Median degree: 5
-Memory usage: 1354MB
-Time DFS: 233.225s
-Time BFS: 229.415s
