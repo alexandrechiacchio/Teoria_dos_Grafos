@@ -4,7 +4,7 @@ Max degree: 0
 Min degree: 0
 Avg degree: 65.9972
 Median degree: 66
-Memory usage: 80.3828MB
+Memory usage: 80.3633MB
 Dikjstra(10, 20): 1.81
 Path to 20: 10 20401 10525 15491 15369 18571 1573 3448 8238 3358 13344 9448 23467 3907 20 
 Dikjstra(10, 30): 1.72
@@ -16,4 +16,5 @@ Path to 50: 10 22754 23713 16217 8863 627 23978 14272 3594 24811 24612 14607 50
 Dikjstra(10, 60): 1.58
 Path to 60: 10 22754 13268 9146 5521 20167 10684 1848 7009 10430 60 
 time dijkstra info: 
-Time Dijkstra: 0.249312s
+Time Dijkstra: 0.209663s
+Time DijkstraNoHeap: 6.05584s
