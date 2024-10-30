@@ -93,6 +93,10 @@ public:
         return ret;
     }
 
+    float getDist(int u){
+        return dist[u];
+    }
+
     void reset() {
         componentCnt = 0;
         visited.clear();
