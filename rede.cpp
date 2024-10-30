@@ -1,3 +1,6 @@
+// file that treats collab network graph
+
+
 #include <iostream>
 #include "graph.cpp"
 using namespace std;
@@ -18,8 +21,8 @@ void printPath(Graph* g , string researcher, vector<string> &researcher_list, ma
 int main(int argc , char const* argv[]) {
     // string inputFile = argv[1];
 
-    map<string , int> researcher_map;
-    vector<string> researcher_list;
+    map<string , int> researcher_map; // maps name to index
+    vector<string> researcher_list; // maps index to name
     string filename = "rede_colaboracao_vertices.txt";
     ifstream file(filename);
     if (!file.is_open()) {

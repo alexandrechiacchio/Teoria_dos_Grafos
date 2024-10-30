@@ -215,9 +215,13 @@ public:
         return dist;
     }
 
+
+    // returns the distance between u and v using dijkstra algorithm
     float dikjstra(int u , int v = 0) {
         componentCnt++;
         priority_queue<pair<float , int>> queue;
+
+        // initializing parameters of first node
         queue.push({ 0, u });
         component[u] = componentCnt;
         visited[u] = true;
@@ -226,10 +230,10 @@ public:
         parent[u] = u;
         while (!(queue.empty())) {
             pair<float , int> u = queue.top(); queue.pop();
-            if (-u.first > dist[u.second]) continue;
+            if (-u.first > dist[u.second]) continue; // skips node if current dist is less than the one in queue
             for (pair<int , float> it : adj[u.second]) {
                 int v = it.first;
-                if (dist[v] > dist[u.second] + it.second) {
+                if (dist[v] > dist[u.second] + it.second) { // updates parameters if new path is shorter
                     visited[v] = true;
                     parent[v] = u.second;
                     depth[v] = depth[u.second] + 1;
@@ -242,6 +246,7 @@ public:
         return dist[v];
     }
 
+    // same as diskjstra but without using priority queue
     float dikjstraNoHeap(int u , int v = 0) {
         componentCnt++;
         vector<pair<float , int>> queue;
@@ -369,6 +374,8 @@ public:
         return ret;
     }
 
+
+    // função que imprime as informações do grafo pedidas pelo trabalho 1
     void printInfo2file_1() {
         string outputFileName = "output_" + inputFile;
         ofstream file(outputFileName);
@@ -451,6 +458,7 @@ public:
 
     }
 
+    // função que imprime as informações do grafo pedidas pelo trabalho 2
     void printInfo2file_2() {
         string outputFileName = "output_" + inputFile;
         ofstream file(outputFileName);
@@ -521,6 +529,7 @@ public:
 
     }
 
+    // função de debug para testar a entrada
     void debugInput() {
         if (containsNegativeWeight) {
             cout << "Graph does contains some negative weight" << endl;
