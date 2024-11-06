@@ -12,9 +12,9 @@ class Graph {
     vector<int> depth;
     vector<int> parent;
     vector<int> component;
-    vector<set<pair<int , float>>> adj;
+    vector<vector<pair<int , int>>> adj;
     string inputFile;
-    vector<float> dist;
+    vector<int> dist;
 
     int componentCnt = 0;
 
@@ -35,21 +35,35 @@ public:
         depth.resize(nodesCnt + 1 , 0);
         parent.resize(nodesCnt + 1 , 0);
         component.resize(nodesCnt + 1 , 0);
-        adj.resize(nodesCnt + 1 , set<pair<int , float>>());
+        adj.resize(nodesCnt + 1 , vector<pair<int , int>>());
         dist.resize(nodesCnt + 1 , 1e9);
 
         while (!file.eof()) {
             cout << "Reading file: " << edgesCnt << " lines read" << '\r';
             edgesCnt++;
             int a , b;
-            float c;
+            int c;
             file >> a >> b >> c;
             // cout << a << " " << b << " " << c << '\n';
-            adj[a].insert({ b, c });
-            adj[b].insert({ a, c });
+            adj[a].push_back({ b, c });
+            // adj[b].insert({ a, c });
             if (c < 0) containsNegativeWeight = true;
         }
         cout << "\r\033[K" << "File read! " << edgesCnt << " lines read." << endl;
+    }
+
+    Graph(Graph* _graph) {
+        inputFile = _graph->inputFile;
+        cout << "Copying graph with input file " << _graph->inputFile << endl;
+        nodesCnt = _graph->nodesCnt;
+        edgesCnt = _graph->edgesCnt;
+        visited = _graph->visited;
+        depth = _graph->depth;
+        parent = _graph->parent;
+        component = _graph->component;
+        adj = _graph->adj;
+        dist = _graph->dist;
+        containsNegativeWeight = _graph->containsNegativeWeight;
 
     }
 
@@ -66,13 +80,13 @@ public:
     }
 
     int maxDegree() {
-        return max(adj.begin() , adj.end() , [](vector<set<pair<int , float>>>::iterator a , vector<set<pair<int , float>>>::iterator b) {
+        return max(adj.begin() , adj.end() , [](vector<vector<pair<int , int>>>::iterator a , vector<vector<pair<int , int>>>::iterator b) {
             return a->size() < b->size();
             })->size();
     }
 
     int minDegree() {
-        return min(adj.begin() , adj.end() , [](vector<set<pair<int , float>>>::iterator a , vector<set<pair<int , float>>>::iterator b) {
+        return min(adj.begin() , adj.end() , [](vector<vector<pair<int , int>>>::iterator a , vector<vector<pair<int , int>>>::iterator b) {
             return a->size() < b->size();
             })->size();
     }
@@ -87,13 +101,13 @@ public:
 
     vector<int> getAdj(int u) {
         vector<int> ret;
-        for (pair<int , float> it : adj[u]) {
+        for (pair<int , int> it : adj[u]) {
             ret.push_back(it.first);
         }
         return ret;
     }
 
-    float getDist(int u){
+    int getDist(int u) {
         return dist[u];
     }
 
@@ -126,7 +140,7 @@ public:
             if (visited[v] == false) {
                 visited[v] = true;
                 component[v] = componentCnt;
-                for (pair<int , float> it : adj[v]) {
+                for (pair<int , int> it : adj[v]) {
                     int viz = it.first;
                     if (visited[viz] == false) {
                         parent[viz] = v;
@@ -148,9 +162,9 @@ public:
         parent[u] = u;
         while (!(queue.empty())) {
             u = queue.front(); queue.pop();
-            for (pair<int , float> it : adj[u]) {
+            for (pair<int , int> it : adj[u]) {
                 int v = it.first;
-                if (!visited[v]) {
+                if (!visited[v] && adj[u][v].second > 0) {
                     queue.push(v);
                     visited[v] = true;
                     parent[v] = u;
@@ -217,9 +231,9 @@ public:
 
 
     // returns the distance between u and v using dijkstra algorithm
-    float dikjstra(int u , int v = 0) {
+    int dikjstra(int u , int v = 0) {
         componentCnt++;
-        priority_queue<pair<float , int>> queue;
+        priority_queue<pair<int , int>> queue;
 
         // initializing parameters of first node
         queue.push({ 0, u });
@@ -229,9 +243,9 @@ public:
         dist[u] = 0;
         parent[u] = u;
         while (!(queue.empty())) {
-            pair<float , int> u = queue.top(); queue.pop();
+            pair<int , int> u = queue.top(); queue.pop();
             if (-u.first > dist[u.second]) continue; // skips node if current dist is less than the one in queue
-            for (pair<int , float> it : adj[u.second]) {
+            for (pair<int , int> it : adj[u.second]) {
                 int v = it.first;
                 if (dist[v] > dist[u.second] + it.second) { // updates parameters if new path is shorter
                     visited[v] = true;
@@ -247,9 +261,9 @@ public:
     }
 
     // same as diskjstra but without using priority queue
-    float dikjstraNoHeap(int u , int v = 0) {
+    int dikjstraNoHeap(int u , int v = 0) {
         componentCnt++;
-        vector<pair<float , int>> queue;
+        vector<pair<int , int>> queue;
         queue.push_back({ 0, u });
         component[u] = componentCnt;
         visited[u] = true;
@@ -258,10 +272,10 @@ public:
         parent[u] = u;
         while (!(queue.empty())) {
             auto it = min_element(queue.begin() , queue.end());
-            pair<float , int> u = *it;
+            pair<int , int> u = *it;
             queue.erase(it);
             if (u.first > dist[u.second]) continue;
-            for (pair<int , float> it : adj[u.second]) {
+            for (pair<int , int> it : adj[u.second]) {
                 int v = it.first;
                 if (dist[v] > dist[u.second] + it.second) {
                     visited[v] = true;
@@ -274,6 +288,51 @@ public:
             }
         }
         return dist[v];
+    }
+
+    int Ford_Fulkerson(int s , int t) {
+        Graph* residual = new Graph(this);
+        vector<vector<pair<int , int>>> flow = adj;
+        for (auto it : flow) for (auto it2 : it) it2.second = 0;
+        // vector<vector<pair<int, int>>> residual = this->adj;
+
+        // cout << this->adj.size() << " " << residual->adj.size() << endl;
+        for (int i = 0; i < adj.size(); i++) {
+            for (int j = 0; j < adj[i].size(); j++) {
+                residual->adj[j].push_back({ i, 0 });
+            }
+        }
+
+        while (true) {
+            residual->BFS(s);
+            if(residual->visited[t] == false) break;
+            vector<int> nodesPath = residual->getPath(t);
+            vector<pair<int,int>> edgesPath;
+            int bottleneck = 1e9;
+            int cur = t, last = t;
+            // cout << residual->parent[s] << endl;
+            while(residual->parent[cur] != cur) {
+                // cout << cur << " " << residual->parent[cur] << endl;
+                cur = residual->parent[cur];
+                edgesPath.push_back({last, cur});
+                bottleneck = min(bottleneck, residual->adj[cur][last].second);
+                last = cur;
+            }
+            edgesPath.push_back({last, cur});
+            for(auto it : edgesPath) {
+
+                residual->adj[it.first][it.second].second -= bottleneck;
+                residual->adj[it.second][it.first].second += bottleneck;
+            }
+            reset();
+        }
+
+        int flowValue = 0;
+        for(int i = 0; i<adj[s].size()/2; i++) {
+            flowValue += adj[s][i].second;
+        }
+        return flowValue;
+
     }
 
     double timeDijkstra() {
