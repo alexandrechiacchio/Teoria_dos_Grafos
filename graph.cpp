@@ -13,8 +13,10 @@ class Graph {
     vector<int> parent;
     vector<int> component;
     vector<vector<pair<int , int>>> adj;
+    vector<vector<pair<int , int>>> flow;
     string inputFile;
     vector<int> dist;
+
 
     int componentCnt = 0;
 
@@ -50,6 +52,12 @@ public:
             if (c < 0) containsNegativeWeight = true;
         }
         cout << "\r\033[K" << "File read! " << edgesCnt << " lines read." << endl;
+        flow = adj;
+        for (auto& vec : flow) {
+            for (auto& p : vec) {
+                p.second = 0;
+            }
+        }
     }
 
     Graph(Graph* _graph) {
@@ -64,7 +72,8 @@ public:
         adj = _graph->adj;
         dist = _graph->dist;
         containsNegativeWeight = _graph->containsNegativeWeight;
-
+        flow = _graph->flow;
+        cout << "Graph copied!" << endl;
     }
 
     int size() {
@@ -111,7 +120,9 @@ public:
         return dist[u];
     }
 
+    // resets everything exept flow
     void reset() {
+
         componentCnt = 0;
         visited.clear();
         depth.clear();
@@ -164,7 +175,7 @@ public:
             u = queue.front(); queue.pop();
             for (pair<int , int> it : adj[u]) {
                 int v = it.first;
-                if (!visited[v] && adj[u][v].second > 0) {
+                if (!visited[v] && it.second > 0) {
                     queue.push(v);
                     visited[v] = true;
                     parent[v] = u;
@@ -302,7 +313,7 @@ public:
                 residual->adj[j].push_back({ i, 0 });
             }
         }
-
+        cout << "Running Ford Fulkerson" << endl;
         while (true) {
             residual->BFS(s);
             if(residual->visited[t] == false) break;
@@ -315,21 +326,46 @@ public:
                 // cout << cur << " " << residual->parent[cur] << endl;
                 cur = residual->parent[cur];
                 edgesPath.push_back({last, cur});
-                bottleneck = min(bottleneck, residual->adj[cur][last].second);
+                auto curEdge = find_if(residual->adj[cur].begin(), residual->adj[cur].end(), [last](const pair<int, int>& edge) {
+                    return edge.first == last;
+                });
+                bottleneck = min(bottleneck, curEdge->second);
                 last = cur;
             }
+            // cout << "bottleneck: " << bottleneck << endl;
+            // for(auto i : edgesPath) {
+                // cout << "{" << i.first << ", " << i.second << "} ";
+            // }
+            // cout << '\n';
             edgesPath.push_back({last, cur});
             for(auto it : edgesPath) {
-
-                residual->adj[it.first][it.second].second -= bottleneck;
-                residual->adj[it.second][it.first].second += bottleneck;
+                // cout << "edge " << it.first << " " << it.second << '\n';
+                auto aux = find_if(residual->adj[it.first].begin(), residual->adj[it.first].end(), [it](const pair<int, int>& edge) {
+                    return edge.first == it.second;
+                });
+                // cout << "aux: " << aux->first << " " << aux->second << '\n';
+                aux->second -= bottleneck;
+                // cout << "aux: " << aux->first << " " << aux->second << '\n';
+                aux = find_if(residual->adj[it.second].begin(), residual->adj[it.second].end(), [it](const pair<int, int>& edge) {
+                    return edge.first == it.first;
+                });
+                // cout << "aux: " << aux->first << " " << aux->second << '\n';
+                aux->second += bottleneck;
+                // cout << "aux: " << aux->first << " " << aux->second << '\n';
+                // falta atualizar o flow (não precisa pq o residuo menos capacidade é igual ao flow)
             }
-            reset();
+            residual->reset();
+        }
+
+        for (int i = 0; i < adj.size(); i++) {
+            for (int j = 0; j < adj[i].size(); j++) {
+                flow[i][j].second = adj[i][j].second - residual->adj[i][j].second;
+            }
         }
 
         int flowValue = 0;
-        for(int i = 0; i<adj[s].size()/2; i++) {
-            flowValue += adj[s][i].second;
+        for(int i = 0; i<adj[s].size(); i++) {
+            flowValue += flow[s][i].second;
         }
         return flowValue;
 
