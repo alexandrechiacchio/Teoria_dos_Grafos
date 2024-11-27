@@ -12,7 +12,7 @@ class Graph {
     vector<int> depth;
     vector<int> parent;
     vector<int> component;
-    vector<vector<pair<int , int>>> adj;
+    vector<unordered_map<int , int>> adj;
     vector<vector<pair<int , int>>> flow;
     string inputFile;
     vector<int> dist;
@@ -37,7 +37,7 @@ public:
         depth.resize(nodesCnt + 1 , 0);
         parent.resize(nodesCnt + 1 , 0);
         component.resize(nodesCnt + 1 , 0);
-        adj.resize(nodesCnt + 1 , vector<pair<int , int>>());
+        adj.resize(nodesCnt + 1);
         dist.resize(nodesCnt + 1 , 1e9);
 
         while (!file.eof()) {
@@ -47,22 +47,16 @@ public:
             int c;
             file >> a >> b >> c;
             // cout << a << " " << b << " " << c << '\n';
-            adj[a].push_back({ b, c });
+            adj[a][b] += c;
             // adj[b].insert({ a, c });
             if (c < 0) containsNegativeWeight = true;
         }
         cout << "\r\033[K" << "File read! " << edgesCnt << " lines read." << endl;
-        flow = adj;
-        for (auto& vec : flow) {
-            for (auto& p : vec) {
-                p.second = 0;
-            }
-        }
     }
 
     Graph(Graph* _graph) {
         inputFile = _graph->inputFile;
-        cout << "Copying graph with input file " << _graph->inputFile << endl;
+        // cout << "Copying graph with input file " << _graph->inputFile << endl;
         nodesCnt = _graph->nodesCnt;
         edgesCnt = _graph->edgesCnt;
         visited = _graph->visited;
@@ -73,7 +67,7 @@ public:
         dist = _graph->dist;
         containsNegativeWeight = _graph->containsNegativeWeight;
         flow = _graph->flow;
-        cout << "Graph copied!" << endl;
+        // cout << "Graph copied!" << endl;
     }
 
     int size() {
@@ -89,13 +83,13 @@ public:
     }
 
     int maxDegree() {
-        return max(adj.begin() , adj.end() , [](vector<vector<pair<int , int>>>::iterator a , vector<vector<pair<int , int>>>::iterator b) {
+        return max(adj.begin() , adj.end() , [](vector<unordered_map<int , int>>::iterator a , vector<unordered_map<int , int>>::iterator b) {
             return a->size() < b->size();
             })->size();
     }
 
     int minDegree() {
-        return min(adj.begin() , adj.end() , [](vector<vector<pair<int , int>>>::iterator a , vector<vector<pair<int , int>>>::iterator b) {
+        return min(adj.begin() , adj.end() , [](vector<unordered_map<int , int>>::iterator a , vector<unordered_map<int , int>>::iterator b) {
             return a->size() < b->size();
             })->size();
     }
@@ -175,7 +169,7 @@ public:
             u = queue.front(); queue.pop();
             for (pair<int , int> it : adj[u]) {
                 int v = it.first;
-                if (!visited[v] && it.second > 0) {
+                if (!visited[v]) {
                     queue.push(v);
                     visited[v] = true;
                     parent[v] = u;
@@ -301,74 +295,101 @@ public:
         return dist[v];
     }
 
-    int Ford_Fulkerson(int s , int t) {
-        Graph* residual = new Graph(this);
-        vector<vector<pair<int , int>>> flow = adj;
-        for (auto it : flow) for (auto it2 : it) it2.second = 0;
-        // vector<vector<pair<int, int>>> residual = this->adj;
 
-        // cout << this->adj.size() << " " << residual->adj.size() << endl;
+    void debug(){
+        cout << "nodesCnt: " << nodesCnt << endl;
+        cout << "edgesCnt: " << edgesCnt << endl;
+        cout << "visited: ";
+        for (bool v : visited) cout << v << " ";
+        cout << endl;
+        cout << "depth: ";
+        for (int d : depth) cout << d << " ";
+        cout << endl;
+        cout << "parent: ";
+        for (int p : parent) cout << p << " ";
+        cout << endl;
+        cout << "component: ";
+        for (int c : component) cout << c << " ";
+        cout << endl;
+        cout << "adj: " << endl;
         for (int i = 0; i < adj.size(); i++) {
-            for (int j = 0; j < adj[i].size(); j++) {
-                residual->adj[j].push_back({ i, 0 });
+            cout << i << ": ";
+            for (auto it : adj[i]) {
+                cout << "(" << it.first << ", " << it.second << ") ";
+            }
+            cout << endl;
+        }
+        cout << "flow: " << endl;
+        for (int i = 0; i < flow.size(); i++) {
+            cout << i << ": ";
+            for (auto it : flow[i]) {
+                cout << "(" << it.first << ", " << it.second << ") ";
+            }
+            cout << endl;
+        }
+        cout << "inputFile: " << inputFile << endl;
+        cout << "dist: ";
+        for (int d : dist) cout << d << " ";
+        cout << endl;
+        cout << "componentCnt: " << componentCnt << endl;
+        cout << "containsNegativeWeight: " << containsNegativeWeight << endl;
+    }
+
+    // returns if there is a path between u and v and updates all parents
+    bool checkPath(int u , int v) {
+        componentCnt++;
+        queue<int> queue;
+        queue.push(u);
+        component[u] = componentCnt;
+        visited[u] = true;
+        depth[u] = 0;
+        parent[u] = u;
+        while (!(queue.empty())) {
+            u = queue.front(); queue.pop();
+            for (pair<const int , int> it : adj[u]) {
+                int v = it.first;
+                if (!visited[v] && it.second > 0) {
+                    queue.push(v);
+                    visited[v] = true;
+                    parent[v] = u;
+                    depth[v] = depth[u] + 1;
+                    component[v] = componentCnt;
+                }
             }
         }
-        cout << "Running Ford Fulkerson" << endl;
-        while (true) {
-            residual->BFS(s);
-            if(residual->visited[t] == false) break;
-            vector<int> nodesPath = residual->getPath(t);
-            vector<pair<int,int>> edgesPath;
-            int bottleneck = 1e9;
-            int cur = t, last = t;
-            // cout << residual->parent[s] << endl;
-            while(residual->parent[cur] != cur) {
-                // cout << cur << " " << residual->parent[cur] << endl;
-                cur = residual->parent[cur];
-                edgesPath.push_back({last, cur});
-                auto curEdge = find_if(residual->adj[cur].begin(), residual->adj[cur].end(), [last](const pair<int, int>& edge) {
-                    return edge.first == last;
-                });
-                bottleneck = min(bottleneck, curEdge->second);
-                last = cur;
+        return visited[v];
+    }
+    
+    int fordFulkerson(int s , int t) {
+        int u , v;
+        Graph* residual = new Graph(this);
+        // debug();
+        int max_flow = 0;
+        int iter = 0;
+        while (residual->checkPath(s , t)) {
+            // cout << "----------------------------------------Iteration " << iter++ << endl;
+            // residual->debug();
+
+            int path_flow = INT_MAX;
+            for (v = t; v != s; v = residual->parent[v]) {
+                u = residual->parent[v];
+                path_flow = min(path_flow , residual->adj[u][v]);
             }
-            // cout << "bottleneck: " << bottleneck << endl;
-            // for(auto i : edgesPath) {
-                // cout << "{" << i.first << ", " << i.second << "} ";
-            // }
-            // cout << '\n';
-            edgesPath.push_back({last, cur});
-            for(auto it : edgesPath) {
-                // cout << "edge " << it.first << " " << it.second << '\n';
-                auto aux = find_if(residual->adj[it.first].begin(), residual->adj[it.first].end(), [it](const pair<int, int>& edge) {
-                    return edge.first == it.second;
-                });
-                // cout << "aux: " << aux->first << " " << aux->second << '\n';
-                aux->second -= bottleneck;
-                // cout << "aux: " << aux->first << " " << aux->second << '\n';
-                aux = find_if(residual->adj[it.second].begin(), residual->adj[it.second].end(), [it](const pair<int, int>& edge) {
-                    return edge.first == it.first;
-                });
-                // cout << "aux: " << aux->first << " " << aux->second << '\n';
-                aux->second += bottleneck;
-                // cout << "aux: " << aux->first << " " << aux->second << '\n';
-                // falta atualizar o flow (não precisa pq o residuo menos capacidade é igual ao flow)
+            // cout << "---------------------- path_flow: " << path_flow << endl;
+            // scanf("%d" , &u);
+            for (v = t; v != s; v = residual->parent[v]) {
+                u = residual->parent[v];
+                residual->adj[u][v] -= path_flow;
+                residual->adj[v][u] += path_flow;
             }
+
+            // Add path flow to overall flow
+            max_flow += path_flow;
             residual->reset();
         }
 
-        for (int i = 0; i < adj.size(); i++) {
-            for (int j = 0; j < adj[i].size(); j++) {
-                flow[i][j].second = adj[i][j].second - residual->adj[i][j].second;
-            }
-        }
-
-        int flowValue = 0;
-        for(int i = 0; i<adj[s].size(); i++) {
-            flowValue += flow[s][i].second;
-        }
-        return flowValue;
-
+        // Return the overall flow
+        return max_flow;
     }
 
     double timeDijkstra() {
@@ -401,6 +422,22 @@ public:
         }
         cout << "\r\033[K" << "Average time: " << (double)(end - start) / CLOCKS_PER_SEC / 100 << endl;
         return (double)(total) / CLOCKS_PER_SEC / 100;
+    }
+
+    double timeFordFulkerson(int u, int v){
+        clock_t start , end;
+        srand(clock());
+        clock_t total = 0;
+        for (int i = 0; i < 10; i++) {
+            reset();
+            start = clock();
+            fordFulkerson(u, v);
+            end = clock();
+            cout << "Time: " << (double)(end - start) / CLOCKS_PER_SEC << '\n';
+            total += (end - start);
+        }
+        // cout << "\r\033[K" << "Average time: " << (double)(total) / CLOCKS_PER_SEC / 10 << endl;
+        return (double)(total) / CLOCKS_PER_SEC / 10;
     }
 
     int diameter(int tol = 1e2) {
@@ -624,6 +661,21 @@ public:
 
     }
 
+    void printInfo2file_3(){
+        string outputFileName = "output_" + inputFile;
+        ofstream file(outputFileName);
+        if (!file.is_open()) {
+            std::cerr << "Error opening file: " << "output.txt" << std::endl;
+            return;
+        }
+
+        file << "Number of nodes: " << size() << endl;
+        file << "Number of edges: " << EdgeSize() << endl;
+
+        file << "maxflow between 1 and 2: " << fordFulkerson(1, 2) << endl;
+        file << "Time to run FordFulkerson: " <<  timeFordFulkerson(1, 2) << endl;
+    }
+
     // função de debug para testar a entrada
     void debugInput() {
         if (containsNegativeWeight) {
@@ -656,5 +708,7 @@ public:
         }
         cout << endl;
     }
+
+
 
 };
