@@ -335,7 +335,7 @@ public:
         cout << "containsNegativeWeight: " << containsNegativeWeight << endl;
     }
 
-    // returns if there is a path between u and v and updates all parents
+    // returns if there is a path between u and v and updates all parents. same as BFS but returns boolean
     bool checkPath(int u , int v) {
         componentCnt++;
         queue<int> queue;
@@ -359,36 +359,32 @@ public:
         }
         return visited[v];
     }
-    
-    int fordFulkerson(int s , int t) {
-        int u , v;
-        Graph* residual = new Graph(this);
-        // debug();
-        int max_flow = 0;
-        int iter = 0;
-        while (residual->checkPath(s , t)) {
-            // cout << "----------------------------------------Iteration " << iter++ << endl;
-            // residual->debug();
 
+    int fordFulkerson(int s , int t) {
+
+        Graph* residual = new Graph(this); // the residual graph will store the remaining capacity of each edge in its adj
+        int max_flow = 0;
+        // while there is a path between s and t
+        while (residual->checkPath(s , t)) {
             int path_flow = INT_MAX;
-            for (v = t; v != s; v = residual->parent[v]) {
-                u = residual->parent[v];
+            // find the minimum capacity of the path
+            for (int v = t; v != s; v = residual->parent[v]) {
+                int u = residual->parent[v];
                 path_flow = min(path_flow , residual->adj[u][v]);
             }
-            // cout << "---------------------- path_flow: " << path_flow << endl;
-            // scanf("%d" , &u);
-            for (v = t; v != s; v = residual->parent[v]) {
-                u = residual->parent[v];
+            // update the residual graph
+            for (int v = t; v != s; v = residual->parent[v]) {
+                int u = residual->parent[v];
                 residual->adj[u][v] -= path_flow;
                 residual->adj[v][u] += path_flow;
             }
 
             // Add path flow to overall flow
             max_flow += path_flow;
+            // reset the visited array
             residual->reset();
         }
 
-        // Return the overall flow
         return max_flow;
     }
 
